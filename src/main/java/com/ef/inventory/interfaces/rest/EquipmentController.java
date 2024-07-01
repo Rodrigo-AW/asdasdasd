@@ -2,17 +2,16 @@ package com.ef.inventory.interfaces.rest;
 
 
 import com.ef.inventory.domain.model.aggregates.Equipment;
+import com.ef.inventory.domain.model.querys.GetEquipmentById;
 import com.ef.inventory.domain.services.IEquipmentCommandService;
+import com.ef.inventory.domain.services.IEquipmentQueryService;
 import com.ef.inventory.interfaces.rest.resources.CreateEquipmentResource;
 import com.ef.inventory.interfaces.rest.resources.EquipmentResource;
 import com.ef.inventory.interfaces.rest.transform.CreateEquipmentCommandFromResourceAssembler;
 import com.ef.inventory.interfaces.rest.transform.EquipmentResourceFromEntityAssembler;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -23,10 +22,11 @@ import static org.springframework.http.HttpStatus.CREATED;
 public class EquipmentController {
 
         private final IEquipmentCommandService equipmentCommandService;
+        private final IEquipmentQueryService equipmentQueryService;
 
-
-        public EquipmentController(IEquipmentCommandService equipmentCommandService) {
+        public EquipmentController(IEquipmentCommandService equipmentCommandService, IEquipmentQueryService equipmentQueryService) {
             this.equipmentCommandService = equipmentCommandService;
+            this.equipmentQueryService = equipmentQueryService;
         }
 
     @PostMapping
@@ -36,6 +36,14 @@ public class EquipmentController {
                         new ResponseEntity<>(EquipmentResourceFromEntityAssembler
                                 .toResourceFromEntity(resp), CREATED))
                 .orElseGet(() -> ResponseEntity.badRequest().build());
+    }
+
+
+    @GetMapping("/{id}")
+    public ResponseEntity<EquipmentResource>getFarmById(@PathVariable int id){
+        Optional<Equipment> farm = equipmentQueryService.handle(new GetEquipmentById(id));
+        return farm.map(resp->ResponseEntity.ok(EquipmentResourceFromEntityAssembler.toResourceFromEntity(resp)))
+                .orElseGet(()->ResponseEntity.notFound().build());
     }
 
 
